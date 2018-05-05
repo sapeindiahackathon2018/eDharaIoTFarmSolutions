@@ -2753,3 +2753,12 @@ textarea:-moz-placeholder {
 .action-buttons{
 	text-align: center;
 }
+
+.blueberryChart.demo1{
+	max-width: 700px;
+	margin: 30px auto;
+}
+
+.page-title{
+	text-align: center;
+}
