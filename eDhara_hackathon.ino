@@ -1,7 +1,3 @@
-/*
- * Rui Santos 
- * Complete Project Details http://randomnerdtutorials.com
-*/
 
 #include <WiFi.h>
 #include "DHT.h"
