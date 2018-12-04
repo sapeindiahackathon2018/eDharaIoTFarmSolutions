@@ -1,256 +1,286 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>e-DHARA - IoT Farm Solution</title>
-	<meta name="mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="viewport" content = "width = device-width, initial-scale = 1, user-scalable = no" />
+    <meta name="viewport" content="width = device-width, initial-scale = 1, user-scalable = no" />
     <link href="css/freeboard.min.css" rel="stylesheet" />
     <script src="js/freeboard.thirdparty.min.js"></script>
 
     <link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="charts/blueberryCharts.css" />
-    
-    <script type="text/javascript">
 
-        var boardURL = "http://192.168.43.213/",
-        checkAuto = false;
+    <script type="text/javascript">
+        function getQueryStringValue(key) {
+            return decodeURIComponent(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURIComponent(key).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));
+        }
+
+        console.log('IP Address: ', getQueryStringValue('ip'))
+
+        var boardURL = (getQueryStringValue('ip')) ? "//" + getQueryStringValue('ip') + "/" : "http://localhost/",
+            checkAuto = false;
+        console.log('boardURL: ', boardURL);
 
         head.js("js/freeboard_plugins.js",
-                // *** Load more plugins here ***
-                function(){
-                    $(function()
-                    { //DOM Ready
-                        freeboard.initialize(true);
+            // *** Load more plugins here ***
+            function() {
+                $(function() { //DOM Ready
+                    freeboard.initialize(true);
 
-                        var hashpattern = boardURL;
+                    var hashpattern = boardURL;
+                    if (hashpattern !== null) {
+                        $.getJSON(hashpattern, function(data) {
+                            console.log("data Temperature: ", data.panes[0].widgets[0].settings.value);
+                            console.log("data MOISTURE: ", data.panes[1].widgets[0].settings.value);
+                            console.log("data Power: ", data.panes[2].widgets[0].settings.value);
+                            console.log("data HUMIDITY: ", data.panes[3].widgets[0].settings.value);
+                            freeboard.loadDashboard(data, function() {
+                                freeboard.setEditing(false);
+                            });
+                        });
+                    }
+
+                    setInterval(function() {
                         if (hashpattern !== null) {
                             $.getJSON(hashpattern, function(data) {
-                                console.log("data Temperature: ", data.panes[0].widgets[0].settings.value);
-                                console.log("data MOISTURE: ", data.panes[1].widgets[0].settings.value);
-                                console.log("data Power: ", data.panes[2].widgets[0].settings.value);
-                                console.log("data HUMIDITY: ", data.panes[3].widgets[0].settings.value);
                                 freeboard.loadDashboard(data, function() {
                                     freeboard.setEditing(false);
                                 });
 
-                                /*if(data.panes[0].widgets[0].settings.value > 25){
-                                    $('#tempControl').trigger('click');
+                                $('body').off('click', '#tempControl').on('click', '#tempControl', function() {
+                                    $this = $(this);
+                                    if ($this.hasClass('active')) {
+                                        $this.removeClass('active');
+                                        $.ajax({
+                                            url: boardURL + "bl"
+                                        });
+                                    } else {
+                                        $this.addClass('active');
+                                        $.ajax({
+                                            url: boardURL + "bh"
+                                        });
+                                    }
+                                });
+
+                                $('body').off('click', '#humidityControl').on('click', '#humidityControl', function() {
+                                    $this = $(this);
+                                    if ($this.hasClass('active')) {
+                                        $this.removeClass('active');
+                                        $.ajax({
+                                            url: boardURL + "cl"
+                                        });
+                                    } else {
+                                        $this.addClass('active');
+                                        $.ajax({
+                                            url: boardURL + "ch"
+                                        });
+                                    }
+                                });
+
+                                $('body').off('click', '#powerControl').on('click', '#powerControl', function() {
+                                    $this = $(this);
+                                    if ($this.hasClass('active')) {
+                                        $this.removeClass('active');
+                                        $.ajax({
+                                            url: boardURL + "el"
+                                        });
+                                    } else {
+                                        $this.addClass('active');
+                                        $.ajax({
+                                            url: boardURL + "eh"
+                                        });
+                                    }
+                                });
+
+                                $('body').off('click', '#moistureControl').on('click', '#moistureControl', function() {
+                                    $this = $(this);
+                                    if ($this.hasClass('active')) {
+                                        $this.removeClass('active');
+                                        $.ajax({
+                                            url: boardURL + "dl"
+                                        });
+                                    } else {
+                                        $this.addClass('active');
+                                        $.ajax({
+                                            url: boardURL + "dh"
+                                        });
+                                    }
+                                });
+
+                                if (data.panes[0].widgets[0].settings.value > 25) {
+                                    $('#tempControl').addClass('active');
+                                    $.ajax({
+                                        url: boardURL + "bh"
+                                    });
+                                } else {
+                                    $('#tempControl').removeClass('active');
+                                    $.ajax({
+                                        url: boardURL + "bl"
+                                    });
                                 }
-                                if(data.panes[1].widgets[0].settings.value > 25){
-                                    $('#moistureControl').trigger('click');
+
+                                if (data.panes[1].widgets[0].settings.value < 25) {
+                                    $('#moistureControl').addClass('active');
+                                    $.ajax({
+                                        url: boardURL + "dh"
+                                    });
+                                } else {
+                                    $('#moistureControl').removeClass('active');
+                                    $.ajax({
+                                        url: boardURL + "dl"
+                                    });
                                 }
-                                if(data.panes[3].widgets[0].settings.value > 25){
-                                    $('#humidityControl').trigger('click');
-                                }*/
+
+                                if (data.panes[3].widgets[0].settings.value > 65) {
+                                    $('#humidityControl').addClass('active');
+                                    $.ajax({
+                                        url: boardURL + "ch"
+                                    });
+                                } else {
+                                    $('#humidityControl').removeClass('active');
+                                    $.ajax({
+                                        url: boardURL + "cl"
+                                    });
+                                }
+
+                                if (data.panes[2].widgets[0].settings.value == 0) {
+                                    $('#powerControl').addClass('active');
+                                    $.ajax({
+                                        url: boardURL + "eh"
+                                    });
+                                } else {
+                                    $('#powerControl').removeClass('active');
+                                    $.ajax({
+                                        url: boardURL + "el"
+                                    });
+                                }
+
                             });
                         }
-
-                        setInterval(function(){ 
-                            if (hashpattern !== null) {
-                                $.getJSON(hashpattern, function(data) {
-                                    freeboard.loadDashboard(data, function() {
-                                        freeboard.setEditing(false);
-                                    });
-
-                                    $('body').off('click','#tempControl').on('click','#tempControl',function(){
-                                        $this = $(this);
-                                        if($this.hasClass('active')){
-                                            $this.removeClass('active');
-                                            $.ajax({
-                                              url: boardURL+"bl"
-                                            });
-                                        } else {
-                                            $this.addClass('active');
-                                            $.ajax({
-                                              url: boardURL+"bh"
-                                            });
-                                        }
-                                    });
-
-                                    $('body').off('click','#humidityControl').on('click','#humidityControl',function(){
-                                        $this = $(this);
-                                        if($this.hasClass('active')){
-                                            $this.removeClass('active');
-                                            $.ajax({
-                                              url: boardURL+"cl"
-                                            });
-                                        } else {
-                                            $this.addClass('active');
-                                            $.ajax({
-                                              url: boardURL+"ch"
-                                            });
-                                        }
-                                    });
-
-                                    $('body').off('click','#powerControl').on('click','#powerControl',function(){
-                                        $this = $(this);
-                                        if($this.hasClass('active')){
-                                            $this.removeClass('active');
-                                            $.ajax({
-                                              url: boardURL+"el"
-                                            });
-                                        } else {
-                                            $this.addClass('active');
-                                            $.ajax({
-                                              url: boardURL+"eh"
-                                            });
-                                        }
-                                    });
-
-                                    $('body').off('click','#moistureControl').on('click','#moistureControl',function(){
-                                        $this = $(this);
-                                        if($this.hasClass('active')){
-                                            $this.removeClass('active');
-                                            $.ajax({
-                                              url: boardURL+"dl"
-                                            });
-                                        } else {
-                                            $this.addClass('active');
-                                            $.ajax({
-                                              url: boardURL+"dh"
-                                            });
-                                        }
-                                    });
-
-                                    if(data.panes[0].widgets[0].settings.value > 25 && checkAuto){
-                                        $('#tempControl').removeClass('active').trigger('click');
-                                    } else if(data.panes[0].widgets[0].settings.value > 25){
-                                        $('#tempControl').addClass('active');
-                                    }
-                                    if(data.panes[1].widgets[0].settings.value < 15 && checkAuto){
-                                        $('#moistureControl').removeClass('active').trigger('click');
-                                    } else if(data.panes[1].widgets[0].settings.value < 15){
-                                        $('#moistureControl').addClass('active');
-                                    }
-                                    if(data.panes[3].widgets[0].settings.value > 60 && checkAuto){
-                                        $('#humidityControl').removeClass('active').trigger('click');
-                                    } else if(data.panes[3].widgets[0].settings.value > 60){
-                                        $('#humidityControl').addClass('active');
-                                    }
-
-                                });
-                            }
-                        }, 10000);
-                    });
+                    }, 10000);
                 });
+            });
 
-        $(document).ready(function(){
-            $('body').on('click','#checkAuto',function(){
-                if(checkAuto){
+        $(document).ready(function() {
+            $('body').on('click', '#checkAuto', function() {
+                if (checkAuto) {
                     checkAuto = false;
                     $(this).removeClass('active');
                 } else {
                     checkAuto = true;
                     $(this).addClass('active');
                 }
-                
+
             });
 
         });
     </script>
 </head>
+
 <body>
-<h1 class="page-title">e-DHARA - IoT Farm Solution</h1>
-<div id="board-content">
-    <img id="dash-logo" data-bind="attr:{src: header_image}, visible:header_image()">
-    <div class="gridster responsive-column-width">
-        <ul data-bind="grid: true">
+    <h1 class="page-title">e-DHARA - IoT Farm Solution</h1>
+    <div id="board-content">
+        <img id="dash-logo" data-bind="attr:{src: header_image}, visible:header_image()">
+        <div class="gridster responsive-column-width">
+            <ul data-bind="grid: true">
+            </ul>
+        </div>
+    </div>
+    <header id="main-header" data-bind="if:allow_edit">
+    </header>
+
+
+
+    <div style="display:hidden">
+        <ul data-bind="template: { name: 'pane-template', foreach: panes}">
         </ul>
     </div>
-</div>
-<header id="main-header" data-bind="if:allow_edit">
-</header>
 
-
-
-<div style="display:hidden">
-    <ul data-bind="template: { name: 'pane-template', foreach: panes}">
-    </ul>
-</div>
-
-<div class="action-buttons">
-    <button id="tempControl" class="onoffbutton">
+    <div class="action-buttons">
+        <button id="tempControl" class="onoffbutton">
         Temperature Control
     </button>
 
-    <button id="humidityControl" class="onoffbutton">
+        <button id="humidityControl" class="onoffbutton">
         Humidity Control
     </button>
 
-    <button id="moistureControl" class="onoffbutton">
+        <button id="moistureControl" class="onoffbutton">
         Moisture Control
     </button>
 
-    <button id="powerControl" class="onoffbutton">
+        <button id="powerControl" class="onoffbutton">
         Power Control
     </button>
 
-    <button id="checkAuto" class="onoffbutton">
+        <button id="checkAuto" class="onoffbutton">
         Manual Override
     </button>
-</div>
-
-<div class="action-buttons">
-    <div class="blueberryChart demo1">
-        
     </div>
-</div>
 
-<script type="text/html" id="pane-template">
-    <li data-bind="pane: true">
-        <header>
-            <h1 data-bind="text: title"></h1>
-            <ul class="board-toolbar pane-tools">
-                <li data-bind="pluginEditor: {operation: 'add', type: 'widget'}">
-                    <i class="icon-plus icon-white"></i>
-                </li>
-                <li data-bind="pluginEditor: {operation: 'edit', type: 'pane'}">
-                    <i class="icon-wrench icon-white"></i>
-                </li>
-                <li data-bind="pluginEditor: {operation: 'delete', type: 'pane'}">
-                    <i class="icon-trash icon-white"></i>
-                </li>
-            </ul>
-        </header>
-        <section data-bind="foreach: widgets">
-            <div class="sub-section" data-bind="css: 'sub-section-height-' + height()">
-                <div class="widget" data-bind="widget: true, css:{fillsize:fillSize}"></div>
-                <div class="sub-section-tools">
-                    <ul class="board-toolbar">
-                        <!-- ko if:$parent.widgetCanMoveUp($data) -->
-                        <li data-bind="click:$parent.moveWidgetUp"><i class="icon-chevron-up icon-white"></i></li>
-                        <!-- /ko -->
-                        <!-- ko if:$parent.widgetCanMoveDown($data) -->
-                        <li data-bind="click:$parent.moveWidgetDown"><i class="icon-chevron-down icon-white"></i></li>
-                        <!-- /ko -->
-                        <li data-bind="pluginEditor: {operation: 'edit', type: 'widget'}"><i class="icon-wrench icon-white"></i></li>
-                        <li data-bind="pluginEditor: {operation: 'delete', type: 'widget'}"><i class="icon-trash icon-white"></i></li>
-                    </ul>
+    <div class="action-buttons">
+        <div class="blueberryChart demo1">
+
+        </div>
+    </div>
+
+    <script type="text/html" id="pane-template">
+        <li data-bind="pane: true">
+            <header>
+                <h1 data-bind="text: title"></h1>
+                <ul class="board-toolbar pane-tools">
+                    <li data-bind="pluginEditor: {operation: 'add', type: 'widget'}">
+                        <i class="icon-plus icon-white"></i>
+                    </li>
+                    <li data-bind="pluginEditor: {operation: 'edit', type: 'pane'}">
+                        <i class="icon-wrench icon-white"></i>
+                    </li>
+                    <li data-bind="pluginEditor: {operation: 'delete', type: 'pane'}">
+                        <i class="icon-trash icon-white"></i>
+                    </li>
+                </ul>
+            </header>
+            <section data-bind="foreach: widgets">
+                <div class="sub-section" data-bind="css: 'sub-section-height-' + height()">
+                    <div class="widget" data-bind="widget: true, css:{fillsize:fillSize}"></div>
+                    <div class="sub-section-tools">
+                        <ul class="board-toolbar">
+                            <!-- ko if:$parent.widgetCanMoveUp($data) -->
+                            <li data-bind="click:$parent.moveWidgetUp"><i class="icon-chevron-up icon-white"></i></li>
+                            <!-- /ko -->
+                            <!-- ko if:$parent.widgetCanMoveDown($data) -->
+                            <li data-bind="click:$parent.moveWidgetDown"><i class="icon-chevron-down icon-white"></i></li>
+                            <!-- /ko -->
+                            <li data-bind="pluginEditor: {operation: 'edit', type: 'widget'}"><i class="icon-wrench icon-white"></i></li>
+                            <li data-bind="pluginEditor: {operation: 'delete', type: 'widget'}"><i class="icon-trash icon-white"></i></li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-        </section>
-    </li>
-</script>
+            </section>
+        </li>
+    </script>
 
-<script src="charts/blueberryCharts.js"></script>
-<script>
-    $(function() {
-        // Instantiate $.blueberryChart
-        $('.demo1').blueberryChart({
-            chartData: [
-                [0, 20, 33, 10, 54, 90, 70, 84, 95, 100],
-                [0, 30, 23, 20, 44, 60, 10, 50, 10, 40]
-            ],
-            chartLables: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
-            showLines: true,
-            showDots: true,
-            lineColors: ['#FF5252', '#777777']
+    <script src="charts/blueberryCharts.js"></script>
+    <script>
+        $(function() {
+            // Instantiate $.blueberryChart
+            $('.demo1').blueberryChart({
+                chartData: [
+                    [0, 20, 33, 10, 54, 90, 70, 84, 95, 100],
+                    [0, 30, 23, 20, 44, 60, 10, 50, 10, 40]
+                ],
+                chartLables: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+                showLines: true,
+                showDots: true,
+                lineColors: ['#FF5252', '#777777']
+            });
         });
-    });
-</script>
+    </script>
 
 </body>
+
 </html>
